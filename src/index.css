@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Legal-tech design tokens - Professional deep blues */
+    --background: 0 0% 100%;
+    --foreground: 217 32% 17%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 217 32% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 32% 17%;
+
+    /* Primary: Deep legal blue */
+    --primary: 217 85% 13%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 217 85% 18%;
+
+    /* Secondary: Professional gray-blue */
+    --secondary: 217 20% 95%;
+    --secondary-foreground: 217 32% 17%;
+
+    /* Muted: Clean neutrals */
+    --muted: 217 12% 96%;
+    --muted-foreground: 217 10% 46%;
+
+    /* Accent: Trust blue for highlights */
+    --accent: 210 100% 96%;
+    --accent-foreground: 217 85% 13%;
+
+    /* Risk indicators */
+    --risk-low: 142 76% 35%;
+    --risk-medium: 45 93% 47%;
+    --risk-high: 0 84% 60%;
+
+    /* Success/validation */
+    --success: 142 76% 35%;
+    --success-foreground: 0 0% 98%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders and inputs */
+    --border: 217 20% 88%;
+    --input: 217 20% 88%;
+    --ring: 217 85% 13%;
+
+    /* Clause editor specific */
+    --clause-border: 217 30% 90%;
+    --clause-hover: 217 30% 98%;
+    --clause-selected: 210 100% 96%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 217 32% 5%;
+    --foreground: 217 10% 92%;
+
+    --card: 217 32% 5%;
+    --card-foreground: 217 10% 92%;
+
+    --popover: 217 32% 8%;
+    --popover-foreground: 217 10% 92%;
+
+    --primary: 210 100% 65%;
+    --primary-foreground: 217 32% 5%;
+    --primary-hover: 210 100% 70%;
+
+    --secondary: 217 32% 12%;
+    --secondary-foreground: 217 10% 92%;
+
+    --muted: 217 32% 12%;
+    --muted-foreground: 217 10% 65%;
+
+    --accent: 217 32% 12%;
+    --accent-foreground: 210 100% 65%;
+
+    --risk-low: 142 76% 45%;
+    --risk-medium: 45 93% 57%;
+    --risk-high: 0 84% 70%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 217 32% 5%;
+
+    --destructive: 0 84% 70%;
+    --destructive-foreground: 217 32% 5%;
+
+    --border: 217 32% 18%;
+    --input: 217 32% 18%;
+    --ring: 210 100% 65%;
+
+    --clause-border: 217 32% 20%;
+    --clause-hover: 217 32% 10%;
+    --clause-selected: 217 50% 15%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
