@@ -1,24 +1,24 @@
 graph TB
   subgraph "React Web Application"
     subgraph Pages
-      Index["Index.tsx\nLanding & navigation"]
-      Questionnaire["Questionnaire.tsx\nGuided creation"]
-      Prompt["PromptContract.tsx\nPrompt-based generation"]
-      Draft["Draft.tsx\nEditor + AI analysis"]
+      Index["Index.tsx<br/>Landing & navigation"]
+      Questionnaire["Questionnaire.tsx<br/>Guided creation"]
+      Prompt["PromptContract.tsx<br/>Prompt-based generation"]
+      Draft["Draft.tsx<br/>Editor + AI analysis"]
     end
 
     subgraph Components
-      Analyzer["ContractAnalyzer.tsx\nClient wrapper for analyze"]
-      UI["shadcn-ui components\nButton, Card, Dialog, etc."]
+      Analyzer["ContractAnalyzer.tsx<br/>Client wrapper for analyze"]
+      UI["shadcn-ui components<br/>Button, Card, Dialog, etc."]
     end
 
     subgraph Hooks
-      UseContracts["useContracts.ts\nLocal storage + CRUD"]
-      UseToast["useToast.ts\nNotifications"]
+      UseContracts["useContracts.ts<br/>Local storage + CRUD"]
+      UseToast["useToast.ts<br/>Notifications"]
     end
 
     subgraph Integrations
-      SupabaseClient["integrations/supabase/client.ts\nSupabase client"]
+      SupabaseClient["integrations/supabase/client.ts<br/>Supabase client"]
     end
 
     subgraph UTILITIES["Utilities"]

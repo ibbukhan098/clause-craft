@@ -2,14 +2,14 @@ graph TB
   User["User"]
 
   subgraph "ClauseCraft System"
-    WebApp["React Web App\n(TypeScript, Vite, Tailwind, shadcn-ui)"]
-    Analyze["analyze-contract\nSupabase Edge Function"]
-    Generate["generate-contract\nSupabase Edge Function"]
-    Assess["assess-contract\nSupabase Edge Function"]
+    WebApp["React Web App<br/>(TypeScript, Vite, Tailwind, shadcn-ui)"]
+    Analyze["analyze-contract<br/>Supabase Edge Function"]
+    Generate["generate-contract<br/>Supabase Edge Function"]
+    Assess["assess-contract<br/>Supabase Edge Function"]
   end
 
-  HF["Hugging Face Router\n(OpenAI-compatible chat completions)"]
-  LS["Browser LocalStorage\n(JSON persistence)"]
+  HF["Hugging Face Router<br/>(OpenAI-compatible chat completions)"]
+  LS["Browser LocalStorage<br/>(JSON persistence)"]
 
   User -->|HTTPS| WebApp
   WebApp -->|fetch| Analyze
