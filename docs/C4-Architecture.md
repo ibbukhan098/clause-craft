@@ -25,6 +25,9 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 - ClauseCraft calls Hugging Face Router for AI-powered generation and analysis
 - All contract data is stored locally in the user's browser for privacy and simplicity
 
+### Diagram
+![System Context](./c4-diagrams/context.svg)
+
 ---
 
 ## Level 2: Container Diagram
@@ -71,6 +74,9 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 - **Hugging Face Router**: OpenAI-compatible chat completions API
 - **Browser LocalStorage**: Client-side JSON storage for contracts and analyses
 
+### Diagram
+![Container Diagram](./c4-diagrams/container.svg)
+
 ---
 
 ## Level 3: Component Diagram (React Web Application)
@@ -96,6 +102,9 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 
 ### Utilities:
 - **Utils**: UUID generation, risk calculation, text parsing functions
+
+### Diagram
+![Frontend Component Diagram](./c4-diagrams/component-frontend.svg)
 
 ---
 
@@ -127,6 +136,9 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 ### Data Flow:
 - **parseContractText()**: Converts AI output to structured clauses
 - **saveToLocalStorage()**: Persists contract and analysis data
+
+### Diagram
+![Draft Page Code Flow](./c4-diagrams/code-draft-flow.svg)
 
 ---
 

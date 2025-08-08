@@ -1,0 +1,18 @@
+graph TB
+  User["User\n(Legal Professional, Business Owner, Contract Manager)"]
+  System["ClauseCraft\nAI Contract Generator & Analyzer\nGenerates contracts and analyzes clauses"]
+  HuggingFace["Hugging Face Router\nAI Model Provider"]
+  Browser["Browser LocalStorage\nClient-Side Storage"]
+
+  User -->|Creates, edits, analyzes| System
+  System -->|Chat completions API| HuggingFace
+  System -->|Stores and reads JSON| Browser
+
+  classDef person fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+  classDef system fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#fff
+  classDef external fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+
+  class User person
+  class System system
+  class HuggingFace,Browser external
+

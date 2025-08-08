@@ -1,0 +1,45 @@
+graph TB
+  subgraph "React Web Application"
+    subgraph Pages
+      Index["Index.tsx\nLanding & navigation"]
+      Questionnaire["Questionnaire.tsx\nGuided creation"]
+      Prompt["PromptContract.tsx\nPrompt-based generation"]
+      Draft["Draft.tsx\nEditor + AI analysis"]
+    end
+
+    subgraph Components
+      Analyzer["ContractAnalyzer.tsx\nClient wrapper for analyze"]
+      UI["shadcn-ui components\nButton, Card, Dialog, etc."]
+    end
+
+    subgraph Hooks
+      UseContracts["useContracts.ts\nLocal storage + CRUD"]
+      UseToast["useToast.ts\nNotifications"]
+    end
+
+    subgraph Integrations
+      SupabaseClient["integrations/supabase/client.ts\nSupabase client"]
+    end
+
+    subgraph UTILITIES["Utilities"]
+      UtilsNode["Parsing, risk calc, UUID"]
+    end
+  end
+
+  Router["React Router"]
+  LocalStorage["Browser LocalStorage"]
+  Edge["Supabase Edge Functions"]
+
+  Router --> Index
+  Router --> Questionnaire
+  Router --> Prompt
+  Router --> Draft
+
+  Draft --> Analyzer
+  Draft --> UseContracts
+  Draft --> UseToast
+  Analyzer --> SupabaseClient
+  UseContracts --> LocalStorage
+  UseContracts --> UtilsNode
+  SupabaseClient --> Edge
+

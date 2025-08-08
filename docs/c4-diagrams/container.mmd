@@ -1,0 +1,31 @@
+graph TB
+  User["User"]
+
+  subgraph "ClauseCraft System"
+    WebApp["React Web App\n(TypeScript, Vite, Tailwind, shadcn-ui)"]
+    Analyze["analyze-contract\nSupabase Edge Function"]
+    Generate["generate-contract\nSupabase Edge Function"]
+    Assess["assess-contract\nSupabase Edge Function"]
+  end
+
+  HF["Hugging Face Router\n(OpenAI-compatible chat completions)"]
+  LS["Browser LocalStorage\n(JSON persistence)"]
+
+  User -->|HTTPS| WebApp
+  WebApp -->|fetch| Analyze
+  WebApp -->|fetch| Generate
+  WebApp -->|fetch| Assess
+  WebApp -->|read/write| LS
+
+  Analyze -->|chat completions| HF
+  Generate -->|chat completions| HF
+  Assess -->|chat completions| HF
+
+  classDef person fill:#08427b,stroke:#052e56,stroke-width:2px,color:#fff
+  classDef container fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#fff
+  classDef external fill:#999999,stroke:#666666,stroke-width:2px,color:#fff
+
+  class User person
+  class WebApp,Analyze,Generate,Assess container
+  class HF,LS external
+

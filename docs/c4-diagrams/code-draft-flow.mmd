@@ -1,0 +1,43 @@
+graph TB
+  subgraph "Draft Page Flow"
+    Draft["Draft.tsx"]
+    ClauseCard["Clause Card"]
+    RiskBadge["Risk Badge"]
+    AnalysisDialog["Analysis Dialog"]
+
+    ContractState["contract state"]
+    AssessmentState["assessment state"]
+    Loading["loading flags"]
+
+    AnalyzeClause["analyzeClause()"]
+    AssessContract["assessContractAI()"]
+    ReanalyzeAll["reanalyzeAll()"]
+
+    CalcRisk["calculateInitialRisk()"]
+    ExtractJur["extractJurisdictionFromClauses()"]
+    GetBadge["getRiskBadge()"]
+
+    ParseText["parseContractText()"]
+    Save["localStorage save"]
+  end
+
+  ContractAnalyzer["ContractAnalyzer.tsx"]
+  Edge["Supabase Edge Functions"]
+  LocalStorage["Browser LocalStorage"]
+
+  Draft --> ContractState
+  Draft --> AssessmentState
+  Draft --> Loading
+  ClauseCard --> AnalyzeClause
+  ClauseCard --> RiskBadge
+  ClauseCard --> AnalysisDialog
+  AnalyzeClause --> ContractAnalyzer
+  AssessContract --> Edge
+  ReanalyzeAll --> AnalyzeClause
+  ContractAnalyzer --> Edge
+  CalcRisk --> GetBadge
+  ParseText --> CalcRisk
+  ContractState --> Save
+  AssessmentState --> Save
+  Save --> LocalStorage
+
