@@ -12,6 +12,15 @@ import { useContractAnalyzer } from '@/components/ai/ContractAnalyzer';
 import { useContracts } from '@/hooks/useContracts';
 import { supabase } from '@/integrations/supabase/client';
 
+// UUID generator utility
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 interface Clause {
   id: string;
   order: number;
@@ -33,7 +42,7 @@ interface Contract {
 
 // Mock data for demonstration
 const mockContract: Contract = {
-  id: '1',
+  id: '550e8400-e29b-41d4-a716-446655440001', // Valid UUID format
   title: 'Non-Disclosure Agreement',
   clauses: [
     {
@@ -74,19 +83,32 @@ const mockContract: Contract = {
   ]
 };
 
+// Utility to ensure contract has valid UUID
+const ensureValidUUID = (contract: Contract): Contract => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(contract.id)) {
+    return {
+      ...contract,
+      id: generateUUID()
+    };
+  }
+  return contract;
+};
+
 const Draft = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [contract, setContract] = useState<Contract>(mockContract);
+  const [contract, setContract] = useState<Contract>(() => ensureValidUUID(mockContract));
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(null);
   const [editingClauseId, setEditingClauseId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [history, setHistory] = useState<Contract[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false);
   const { toast } = useToast();
   const { analyzeClause, isInitialized, isInitializing, error: aiError, initializeAI } = useContractAnalyzer();
-  const { saveAnalysis } = useContracts();
+  const { saveAnalysis, createContract } = useContracts();
 
   // Route protection and contract generation
   useEffect(() => {
@@ -118,7 +140,7 @@ const Draft = () => {
   const generateContractFromPrompt = async (prompt: string) => {
     try {
       setContract({
-        id: Date.now().toString(),
+        id: generateUUID(),
         title: 'Generating Contract...',
         clauses: [
           {
@@ -139,13 +161,44 @@ const Draft = () => {
       if (error) throw error;
 
       if (data?.contract) {
-        setContract(data.contract);
-        setHistory([data.contract]);
-        setHistoryIndex(0);
-        toast({
-          title: "Contract Generated",
-          description: "Your contract has been successfully generated using AI.",
-        });
+        const validContract = ensureValidUUID(data.contract);
+        
+        try {
+          // Save the generated contract to the database (no authentication required)
+          const savedContract = await createContract(
+            validContract.title,
+            { clauses: validContract.clauses }
+          );
+          
+          // Use the saved contract (which has the correct database ID)
+          setContract({
+            ...validContract,
+            id: savedContract.id
+          });
+          setHistory([{
+            ...validContract,
+            id: savedContract.id
+          }]);
+          setHistoryIndex(0);
+          
+          toast({
+            title: "Contract Generated with AI",
+            description: "Your contract has been successfully generated.",
+          });
+        } catch (saveError) {
+          console.error('Failed to generate contract', saveError);
+          
+          // Still use the generated contract even if database save fails
+          setContract(validContract);
+          setHistory([validContract]);
+          setHistoryIndex(0);
+          
+          toast({
+            title: "Contract Generated (Local Only)",
+            description: `Contract generated successfully but couldn't be saved: ${saveError instanceof Error ? saveError.message : 'Unknown error'}`,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Contract generation error:', error);
@@ -157,7 +210,7 @@ const Draft = () => {
       
       // Fallback to placeholder
       const fallbackContract = {
-        id: Date.now().toString(),
+        id: generateUUID(),
         title: 'Generated Contract',
         clauses: [
           {
@@ -169,16 +222,24 @@ const Draft = () => {
           }
         ]
       };
-      setContract(fallbackContract);
-      setHistory([fallbackContract]);
+      const validFallbackContract = ensureValidUUID(fallbackContract);
+      setContract(validFallbackContract);
+      setHistory([validFallbackContract]);
       setHistoryIndex(0);
     }
   };
 
   const getRiskBadge = (score: number) => {
-    if (score < 0.3) return { variant: 'default', label: 'Low Risk', className: 'bg-risk-low text-white' };
-    if (score < 0.7) return { variant: 'secondary', label: 'Medium Risk', className: 'bg-risk-medium text-white' };
+    // Inclusive thresholds so that 0.3 is treated as Low (not Medium)
+    if (score <= 0.3) return { variant: 'default', label: 'Low Risk', className: 'bg-risk-low text-white' };
+    if (score <= 0.7) return { variant: 'secondary', label: 'Medium Risk', className: 'bg-risk-medium text-white' };
     return { variant: 'destructive', label: 'High Risk', className: 'bg-risk-high text-white' };
+  };
+
+  const computeOverallRisk = (clauses: Clause[]) => {
+    if (!clauses.length) return 0.3;
+    const total = clauses.reduce((sum, c) => sum + (typeof c.riskScore === 'number' ? c.riskScore : 0.3), 0);
+    return Math.min(1, total / clauses.length);
   };
 
   const selectedClause = contract.clauses.find(c => c.id === selectedClauseId);
@@ -222,7 +283,7 @@ const Draft = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      setContract(history[newIndex]);
+      setContract(ensureValidUUID(history[newIndex]));
     }
   };
 
@@ -230,7 +291,7 @@ const Draft = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      setContract(history[newIndex]);
+      setContract(ensureValidUUID(history[newIndex]));
     }
   };
 
@@ -282,8 +343,14 @@ const Draft = () => {
     setIsAnalyzing(true);
     try {
       console.log('Starting AI analysis via Hugging Face API...');
+      console.log('Clause text preview:', clauseText.substring(0, 100) + '...');
       
       const analysis = await analyzeClause(clauseText);
+      
+      console.log('Analysis result:', analysis);
+      
+      // Check if this is a fallback response
+      const isFallback = analysis.suggestions.some(s => s.includes('fallback method'));
       
       // Update the clause with new risk score
       setContract(prev => ({
@@ -295,13 +362,21 @@ const Draft = () => {
         )
       }));
       
-      toast({
-        title: "🤖 Hugging Face Analysis Complete",
-        description: `Risk Score: ${(analysis.riskScore * 100).toFixed(0)}% | ${analysis.suggestions.length} AI suggestions`,
-      });
+      if (isFallback) {
+        toast({
+          title: "⚠️ AI Analysis - Fallback Mode",
+          description: "Hugging Face API unavailable. Using rule-based analysis. Check environment variables.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "🤖 Hugging Face Analysis Complete",
+          description: `Risk Score: ${(analysis.riskScore * 100).toFixed(0)}% | ${analysis.suggestions.length} AI suggestions`,
+        });
+      }
       
-      // Show first suggestion if any
-      if (analysis.suggestions.length > 0) {
+      // Show first suggestion if any (and not fallback)
+      if (analysis.suggestions.length > 0 && !isFallback) {
         setTimeout(() => {
           toast({
             title: "💡 AI Suggestion",
@@ -324,6 +399,35 @@ const Draft = () => {
       });
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const reanalyzeAll = async () => {
+    if (!contract?.clauses?.length) return;
+    setIsBulkAnalyzing(true);
+    try {
+      toast({ title: 'Reanalyzing all clauses…', description: `Analyzing ${contract.clauses.length} clauses with AI` });
+      let updatedClauses = [...contract.clauses];
+      for (const clause of contract.clauses) {
+        try {
+          const analysis = await analyzeClause(clause.text);
+          updatedClauses = updatedClauses.map((c) =>
+            c.id === clause.id ? { ...c, riskScore: analysis.riskScore } : c
+          );
+          if (contract.id) {
+            await saveAnalysis(contract.id, clause.id, analysis);
+          }
+        } catch (err) {
+          console.warn('Failed to analyze clause', clause.id, err);
+        }
+      }
+      const newContract = { ...contract, clauses: updatedClauses };
+      setContract(newContract);
+      addToHistory(newContract);
+      const overall = computeOverallRisk(updatedClauses);
+      toast({ title: 'Reanalysis complete', description: `Overall risk is now ${(overall * 100).toFixed(0)}% (${getRiskBadge(overall).label}).` });
+    } finally {
+      setIsBulkAnalyzing(false);
     }
   };
 
@@ -421,8 +525,8 @@ const Draft = () => {
                                 e.stopPropagation();
                                 analyzeWithAI(clause.text, clause.id);
                               }}
-                              disabled={isAnalyzing}
-                              title="Analyze with Hugging Face AI"
+                              disabled={isAnalyzing || isBulkAnalyzing}
+                              title="Analyze with AI"
                             >
                               <Sparkles className="h-3 w-3" />
                             </Button>
@@ -478,7 +582,14 @@ const Draft = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Overall Risk</span>
-                    <Badge className="bg-risk-low text-white">Low</Badge>
+                    <Badge className={getRiskBadge(computeOverallRisk(contract.clauses)).className}>
+                      {getRiskBadge(computeOverallRisk(contract.clauses)).label}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button size="sm" variant="outline" onClick={reanalyzeAll} disabled={isAnalyzing || isBulkAnalyzing}>
+                      <Sparkles className="h-3 w-3 mr-2" /> Reanalyze All
+                    </Button>
                   </div>
                   <Separator />
                   <div className="space-y-2">
