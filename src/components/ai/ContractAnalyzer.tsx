@@ -12,7 +12,7 @@ interface AnalysisResult {
 export class ContractAnalyzer {
   static async analyzeClause(text: string): Promise<AnalysisResult> {
     try {
-      console.log('Analyzing clause with Hugging Face API...');
+      // console.log('Analyzing clause with Hugging Face API...');
       
       const { data, error } = await supabase.functions.invoke('analyze-contract', {
         body: { clauseText: text }
@@ -27,7 +27,7 @@ export class ContractAnalyzer {
         throw new Error('No data returned from analysis');
       }
 
-      console.log('Analysis complete:', data);
+      // console.log('Analysis complete:', data);
       return data as AnalysisResult;
     } catch (error) {
       console.error('Analysis failed:', error);

@@ -41,7 +41,7 @@ serve(async (req) => {
       throw new Error('Prompt is required');
     }
 
-    console.log('Generating contract from prompt:', prompt.substring(0, 100) + '...');
+    // console.log('Generating contract from prompt:', prompt.substring(0, 100) + '...');
 
     // Use multiple public instruct models (first that succeeds)
     const contractPrompt = `Generate a professional legal contract based on this request: "${prompt}"
@@ -93,7 +93,7 @@ Requirements:
     let lastError: unknown = undefined;
     for (const model of modelsToTry) {
       try {
-        console.log(`Attempting HF text generation with model: ${model}`);
+        // console.log(`Attempting HF text generation with model: ${model}`);
         generatedText = await queryHuggingFaceTextGen({
           token: HUGGING_FACE_ACCESS_TOKEN,
           model,
@@ -107,16 +107,16 @@ Requirements:
         if (generatedText && generatedText.includes(contractPrompt)) {
         generatedText = generatedText.replace(contractPrompt, '').trim();
       }
-        console.log('HF generation success with model:', model);
+        // console.log('HF generation success with model:', model);
         break;
       } catch (err) {
         lastError = err;
-        console.log(`Model ${model} failed:`, err);
+        // console.log(`Model ${model} failed:`, err);
       }
     }
 
     if (!generatedText) {
-      console.log('All models failed, using fallback template:', lastError);
+      // console.log('All models failed, using fallback template:', lastError);
       generatedText = generateContractTemplate(prompt);
     }
 
@@ -138,7 +138,7 @@ Requirements:
       clauses
     };
 
-    console.log('Contract generated successfully');
+    // console.log('Contract generated successfully');
 
     return new Response(JSON.stringify({ contract }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -341,7 +341,7 @@ function parseContractText(text: string, originalPrompt: string): ContractClause
     currentType = extractClauseType(header);
     
     // Debug logging to see what we're matching
-    console.log(`Found header: "${header}" -> Type: "${currentType}"`);
+    // console.log(`Found header: "${header}" -> Type: "${currentType}"`);
     
     // Get content until next header or end
     const nextMatch = matches[i + 1];
@@ -529,7 +529,7 @@ function parseContractManually(text: string, originalPrompt: string): ContractCl
 function extractClauseType(line: string): string {
   const trimmedLine = line.trim();
   
-  console.log(`Analyzing line for type: "${trimmedLine}"`);
+  // console.log(`Analyzing line for type: "${trimmedLine}"`);
   
   // Direct mapping for our exact header formats
   switch (trimmedLine) {
@@ -618,7 +618,7 @@ function extractClauseType(line: string): string {
   }
   
   // Default fallback
-  console.log(`No specific type found for "${trimmedLine}", defaulting to General Terms`);
+  // console.log(`No specific type found for "${trimmedLine}", defaulting to General Terms`);
   return 'General Terms';
 }
 

@@ -170,7 +170,7 @@ serve(async (req) => {
       throw new Error('Clause text is required');
     }
 
-    console.log('Analyzing clause:', clauseText.substring(0, 100) + '...');
+    // console.log('Analyzing clause:', clauseText.substring(0, 100) + '...');
 
     // Try models that work with the new chat completions API
     const modelsToTry = [
@@ -184,22 +184,22 @@ serve(async (req) => {
     let lastError: unknown = undefined;
     for (const model of modelsToTry) {
       try {
-        console.log(`Attempting HF QA with model: ${model}`);
+        // console.log(`Attempting HF QA with model: ${model}`);
         analysisResult = await queryHuggingFaceQA({
           token: HUGGING_FACE_ACCESS_TOKEN,
           question: 'What are the key obligations, terms, and potential risks in this clause?',
           context: clauseText,
           model,
         });
-        console.log('HF analysis result:', { model, ...analysisResult });
+        // console.log('HF analysis result:', { model, ...analysisResult });
         break;
       } catch (err) {
         lastError = err;
-        console.log(`Model ${model} failed:`, err);
+        // console.log(`Model ${model} failed:`, err);
       }
     }
     if (!analysisResult) {
-      console.log('All models failed, using fallback analysis:', lastError);
+      // console.log('All models failed, using fallback analysis:', lastError);
       analysisResult = { answer: 'Analysis completed with fallback method', score: 0.7 };
     }
 
@@ -244,7 +244,7 @@ serve(async (req) => {
       confidence: analysisResult?.score || 0.7
     };
 
-    console.log('Analysis complete:', result);
+    // console.log('Analysis complete:', result);
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

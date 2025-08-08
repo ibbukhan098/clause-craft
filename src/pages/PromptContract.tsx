@@ -61,7 +61,7 @@ const PromptContract = () => {
           {/* Header */}
           <div className="mb-8">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               onClick={() => navigate('/')}
               className="mb-4"
             >

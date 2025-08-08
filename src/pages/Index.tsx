@@ -59,7 +59,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="mb-6">
               <FileText className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h1 className="text-5xl font-bold text-foreground mb-4">
+              <h1 className="text-5xl font-bold text-foreground mb-4 tracking-tight">
                 ClauseCraft
               </h1>
               <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">

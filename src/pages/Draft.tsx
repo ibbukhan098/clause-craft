@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText, AlertTriangle, CheckCircle, Download, Undo2, Redo2, Edit3, Sparkles, Save, X, ArrowLeft } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useContractAnalyzer } from '@/components/ai/ContractAnalyzer';
 import { useContracts } from '@/hooks/useContracts';
@@ -106,6 +107,13 @@ const Draft = () => {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isBulkAnalyzing, setIsBulkAnalyzing] = useState(false);
+  const [assessment, setAssessment] = useState<{
+    missingClauses: string[];
+    complianceIssues: string[];
+    jurisdiction?: string;
+  } | null>(null);
+  const [showIssues, setShowIssues] = useState(false);
+  const [showMissing, setShowMissing] = useState(false);
   const { toast } = useToast();
   const { analyzeClause, isInitialized, isInitializing, error: aiError, initializeAI } = useContractAnalyzer();
   const { saveAnalysis, createContract } = useContracts();
@@ -242,6 +250,70 @@ const Draft = () => {
     return Math.min(1, total / clauses.length);
   };
 
+  const computeMissingClauses = (clauses: Clause[]) => {
+    const expected: string[] = [
+      'Parties',
+      'Purpose & Scope',
+      'Terms & Conditions',
+      'Payment Terms',
+      'Intellectual Property',
+      'Termination',
+      'Confidentiality',
+    ];
+    const present = new Set(clauses.map(c => c.type));
+    const missing = expected.filter(t => !present.has(t));
+    return { count: missing.length, list: missing };
+  };
+
+  const computeComplianceIssues = (clauses: Clause[]) => {
+    const text = clauses.map(c => c.text.toLowerCase()).join('\n');
+    const riskyTerms = [
+      'unlimited liability',
+      'without limitation',
+      'sole discretion',
+      'perpetual',
+      'irrevocable',
+      'exclusive',
+      'penalty',
+      'liquidated damages',
+      'auto-renew',
+      'automatic renewal',
+      'indemnif',
+    ];
+    const matched = new Set<string>();
+    for (const term of riskyTerms) {
+      if (text.includes(term)) matched.add(term);
+    }
+    return { count: matched.size, terms: Array.from(matched) };
+  };
+
+  const extractJurisdictionFromClauses = (clauses: Clause[]): string => {
+    if (!clauses?.length) return 'Not specified';
+    const fullText = clauses.map(c => c.text).join('\n');
+
+    const patterns: RegExp[] = [
+      /governing\s+law\s*[:\-]?\s*([^\.\n;\)]+)/i,
+      /governed\s+by[^\.\n]*?laws?\s+of\s+([^\.\n;\)]+)/i,
+      /in\s+accordance\s+with[^\.\n]*?laws?\s+of\s+([^\.\n;\)]+)/i,
+      /under\s+the?\s*laws?\s+of\s+([^\.\n;\)]+)/i,
+      /jurisdiction\s*[:\-]?\s*([^\.\n;\)]+)/i,
+      /venue\s*[:\-]?\s*([^\.\n;\)]+)/i,
+      /construed\s+in\s+accordance\s+with\s+the?\s*laws?\s+of\s+([^\.\n;\)]+)/i,
+    ];
+
+    for (const rx of patterns) {
+      const m = fullText.match(rx);
+      if (m && m[1]) {
+        const value = m[1].trim().replace(/^the\s+/i, '');
+        if (!/[\[\]]|jurisdiction|state|country/i.test(value) || value.length > 3) {
+          return value;
+        }
+      }
+    }
+
+    return 'Not specified';
+  };
+
   const selectedClause = contract.clauses.find(c => c.id === selectedClauseId);
 
   const handleExport = () => {
@@ -342,12 +414,11 @@ const Draft = () => {
   const analyzeWithAI = async (clauseText: string, clauseId: string) => {
     setIsAnalyzing(true);
     try {
-      console.log('Starting AI analysis via Hugging Face API...');
-      console.log('Clause text preview:', clauseText.substring(0, 100) + '...');
+      // Debug logs removed for production cleanliness
       
       const analysis = await analyzeClause(clauseText);
       
-      console.log('Analysis result:', analysis);
+      // console.log('Analysis result:', analysis);
       
       // Check if this is a fallback response
       const isFallback = analysis.suggestions.some(s => s.includes('fallback method'));
@@ -429,6 +500,32 @@ const Draft = () => {
     } finally {
       setIsBulkAnalyzing(false);
     }
+  };
+
+  const assessContractAI = async () => {
+    try {
+      const fullText = `${contract.title}\n\n${contract.clauses.map(c => `${c.type}\n${c.text}`).join('\n\n')}`;
+      const { data, error } = await supabase.functions.invoke('assess-contract', {
+        body: { contractText: fullText }
+      });
+      if (error) throw error;
+      if (data) {
+        const missing = Array.isArray(data.missing_clauses) ? data.missing_clauses.length : 0;
+        const issues = Array.isArray(data.compliance_issues) ? data.compliance_issues.length : 0;
+        const jurisdiction = typeof data.jurisdiction === 'string' && data.jurisdiction.trim() ? data.jurisdiction : extractJurisdictionFromClauses(contract.clauses);
+        toast({ title: 'AI Assessment Complete', description: `${issues} compliance issues, ${missing} missing clauses${jurisdiction ? `, jurisdiction: ${jurisdiction}` : ''}` });
+        setAssessment({
+          missingClauses: Array.isArray(data.missing_clauses) ? data.missing_clauses : [],
+          complianceIssues: Array.isArray(data.compliance_issues) ? data.compliance_issues : [],
+          jurisdiction,
+        });
+        return data as { missing_clauses: string[]; compliance_issues: string[]; jurisdiction?: string };
+      }
+    } catch (err) {
+      console.error('AI assessment error', err);
+      toast({ title: 'Assessment failed', description: 'Falling back to heuristic counts', variant: 'destructive' });
+    }
+    return null;
   };
 
   return (
@@ -595,21 +692,59 @@ const Draft = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Compliance Issues</span>
-                      <CheckCircle className="h-4 w-4 text-success" />
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground" id="compliance-count">{assessment ? assessment.complianceIssues.length : computeComplianceIssues(contract.clauses).count}</span>
+                        <Button
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          variant="outline"
+                          onClick={async () => {
+                            if (!assessment) {
+                              const r = await assessContractAI();
+                              if (!r) return;
+                            }
+                            setShowIssues(true);
+                          }}
+                          disabled={(assessment ? assessment.complianceIssues.length : computeComplianceIssues(contract.clauses).count) === 0}
+                        >
+                          View
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Missing Clauses</span>
-                      <span className="text-foreground">0</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground" id="missing-count">{assessment ? assessment.missingClauses.length : computeMissingClauses(contract.clauses).count}</span>
+                        <Button
+                          size="sm"
+                          className="h-7 px-2 text-xs"
+                          variant="outline"
+                          onClick={async () => {
+                            if (!assessment) {
+                              const r = await assessContractAI();
+                              if (!r) return;
+                            }
+                            setShowMissing(true);
+                          }}
+                          disabled={(assessment ? assessment.missingClauses.length : computeMissingClauses(contract.clauses).count) === 0}
+                        >
+                          View
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Jurisdiction</span>
-                      <span className="text-foreground">{
-                        contract.clauses.find(c => 
-                          c.text.toLowerCase().includes('governing law') || 
-                          c.text.toLowerCase().includes('governed by') ||
-                          c.text.toLowerCase().includes('jurisdiction')
-                        )?.text.match(/(?:governing law|governed by|jurisdiction).*?(?:laws of |in |under )([^,.\n\)]+)/i)?.[1]?.trim() || 'Not specified'
-                      }</span>
+                      <span className="text-foreground" id="jurisdiction-text">{assessment?.jurisdiction || extractJurisdictionFromClauses(contract.clauses)}</span>
+                    </div>
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="outline" onClick={async () => {
+                        const result = await assessContractAI();
+                        if (result) {
+                          // state is already updated via setAssessment
+                        }
+                      }}>
+                        <Sparkles className="h-3 w-3 mr-2" /> Assess with AI
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -658,6 +793,44 @@ const Draft = () => {
           </div>
         </div>
       </div>
+      <Dialog open={showIssues} onOpenChange={setShowIssues}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Compliance Issues</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            {assessment?.complianceIssues?.length ? (
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {assessment.complianceIssues.map((i, idx) => (
+                  <li key={idx}>{i}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No issues detected.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showMissing} onOpenChange={setShowMissing}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Missing Clauses</DialogTitle>
+          </DialogHeader>
+          <div className="mt-2">
+            {assessment?.missingClauses?.length ? (
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                {assessment.missingClauses.map((c, idx) => (
+                  <li key={idx}>{c}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No missing clauses.</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

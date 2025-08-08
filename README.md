@@ -62,24 +62,6 @@ Update `src/integrations/supabase/client.ts` to read from `import.meta.env`.
 
 Both generation and analysis share the same risk scoring heuristics to ensure stability when re-analyzing unchanged text. Overall risk is the average of clause risk scores (capped to 1.0).
 
-## Deployment (Vercel)
-
-This repo includes `vercel.json` for a Vite SPA build:
-```json
-{
-  "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [{ "source": "/(.*)", "destination": "/" }]
-}
-```
-
-Steps:
-1. Connect GitHub repo to Vercel and import project
-2. Build Command: `npm run build`, Output Directory: `dist`
-3. Set Production Branch to `main` for auto-deploys on push
-4. Keep `HUGGING_FACE_ACCESS_TOKEN` in Supabase (edge functions run there)
 
 ## Project Structure
 
@@ -100,14 +82,3 @@ supabase/functions/
 ├── analyze-contract/index.ts           # Calls HF Router for clause analysis
 └── generate-contract/index.ts          # Calls HF Router for generation + parsing
 ```
-
-## Scripts
-
-- `npm run dev` – start dev server
-- `npm run build` – production build
-- `npm run preview` – preview production build
-- `npm run lint` – run ESLint
-
-## License
-
-MIT
