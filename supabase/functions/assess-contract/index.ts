@@ -33,7 +33,7 @@ function safeParseJson(body: string): any | null {
 }
 
 async function runAssessment(token: string, model: string, contractText: string): Promise<Assessment> {
-  const response = await fetch("https://router.huggingface.co/v1/chat/completions", {
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -57,7 +57,7 @@ async function runAssessment(token: string, model: string, contractText: string)
   });
 
   const text = await response.text();
-  if (!response.ok) throw new Error(`HF API ${response.status}: ${text.slice(0, 200)}`);
+  if (!response.ok) throw new Error(`Groq API ${response.status}: ${text.slice(0, 200)}`);
 
   const data = safeParseJson(text);
   if (!data?.choices?.[0]?.message?.content) {
@@ -81,8 +81,8 @@ serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get("HUGGING_FACE_ACCESS_TOKEN");
-    if (!token) throw new Error("HUGGING_FACE_ACCESS_TOKEN is not set");
+    const token = Deno.env.get("GROQ_API_KEY");
+    if (!token) throw new Error("GROQ_API_KEY is not set");
 
     const { contractText } = await req.json();
     if (!contractText || typeof contractText !== "string") {
@@ -90,10 +90,8 @@ serve(async (req) => {
     }
 
     const models = [
-      "meta-llama/Llama-3.3-70B-Instruct",
-      "meta-llama/Llama-3.1-8B-Instruct",
-      "google/gemma-3-4b-it",
-      "Qwen/Qwen3-4B-Instruct-2507",
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
     ];
 
     let lastError: unknown = undefined;

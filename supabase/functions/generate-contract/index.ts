@@ -29,9 +29,9 @@ serve(async (req) => {
   }
 
   try {
-    const HUGGING_FACE_ACCESS_TOKEN = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-    if (!HUGGING_FACE_ACCESS_TOKEN) {
-      throw new Error('HUGGING_FACE_ACCESS_TOKEN is not set');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not set');
     }
 
 
@@ -77,15 +77,10 @@ Requirements:
 - Do not include numbered lists (1., 2., 3.) in section headers
 - Use the exact header names: PARTIES, PURPOSE AND SCOPE, TERMS AND CONDITIONS, PAYMENT TERMS, INTELLECTUAL PROPERTY, TERMINATION, MISCELLANEOUS`;
 
-    // Try text generation via HF REST API
-    // Prefer fully public, Inference-API-enabled models first to avoid 404/gated access
-    // You can reorder or add gated models once your HF token has access
+    // Try text generation via Groq, largest model first
     const modelsToTry = [
-      // Your accessible models with chat completions API
-      'meta-llama/Llama-3.3-70B-Instruct',
-      'meta-llama/Llama-3.1-8B-Instruct',
-      'google/gemma-3-4b-it',
-      'Qwen/Qwen3-4B-Instruct-2507',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
       // Template fallback will be used if all models fail
     ];
 
@@ -93,9 +88,9 @@ Requirements:
     let lastError: unknown = undefined;
     for (const model of modelsToTry) {
       try {
-        // console.log(`Attempting HF text generation with model: ${model}`);
-        generatedText = await queryHuggingFaceTextGen({
-          token: HUGGING_FACE_ACCESS_TOKEN,
+        // console.log(`Attempting Groq text generation with model: ${model}`);
+        generatedText = await queryGroqTextGen({
+          token: GROQ_API_KEY,
           model,
           prompt: contractPrompt,
           maxNewTokens: 1200,
@@ -107,7 +102,7 @@ Requirements:
         if (generatedText && generatedText.includes(contractPrompt)) {
         generatedText = generatedText.replace(contractPrompt, '').trim();
       }
-        // console.log('HF generation success with model:', model);
+        // console.log('Groq generation success with model:', model);
         break;
       } catch (err) {
         lastError = err;
@@ -159,7 +154,7 @@ Requirements:
   }
 });
 
-async function queryHuggingFaceTextGen(params: {
+async function queryGroqTextGen(params: {
   token: string;
   model: string;
   prompt: string;
@@ -170,9 +165,9 @@ async function queryHuggingFaceTextGen(params: {
 }): Promise<string> {
   const { token, model, prompt, maxNewTokens = 1200, temperature = 0.3, topP = 0.9 } = params;
 
-  // Use the correct Hugging Face Router endpoint
+  // Groq's OpenAI-compatible chat completions endpoint
   const response = await fetch(
-    'https://router.huggingface.co/v1/chat/completions',
+    'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -204,7 +199,7 @@ async function queryHuggingFaceTextGen(params: {
   
   if (!response.ok) {
     text = await response.text();
-    throw new Error(`HF API ${response.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Groq API ${response.status}: ${text.slice(0, 200)}`);
   }
 
   // Read response text once
@@ -214,7 +209,7 @@ async function queryHuggingFaceTextGen(params: {
   try {
     data = JSON.parse(text);
   } catch (parseError) {
-    throw new Error(`Invalid JSON response from HF API. Response: ${text.slice(0, 200)}`);
+    throw new Error(`Invalid JSON response from Groq API. Response: ${text.slice(0, 200)}`);
   }
   
   // Extract content from OpenAI-compatible chat completion response
@@ -222,7 +217,7 @@ async function queryHuggingFaceTextGen(params: {
     return data.choices[0].message.content;
   }
   
-  throw new Error(`Unexpected response format from HF API. Data: ${JSON.stringify(data).slice(0, 200)}`);
+  throw new Error(`Unexpected response format from Groq API. Data: ${JSON.stringify(data).slice(0, 200)}`);
 }
 
 function generateContractTemplate(prompt: string): string {

@@ -90,7 +90,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function queryHuggingFaceQA(params: {
+async function queryGroqQA(params: {
   token: string;
   question: string;
   context: string;
@@ -98,9 +98,9 @@ async function queryHuggingFaceQA(params: {
 }): Promise<{ answer?: string; score?: number }> {
   const { token, question, context, model } = params;
   
-  // Use the correct Hugging Face Router endpoint
+  // Groq's OpenAI-compatible chat completions endpoint
   const response = await fetch(
-    'https://router.huggingface.co/v1/chat/completions',
+    'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -132,7 +132,7 @@ async function queryHuggingFaceQA(params: {
   
   if (!response.ok) {
     text = await response.text();
-    throw new Error(`HF API ${response.status}: ${text.slice(0, 200)}`);
+    throw new Error(`Groq API ${response.status}: ${text.slice(0, 200)}`);
   }
 
   // Read response text once
@@ -142,7 +142,7 @@ async function queryHuggingFaceQA(params: {
   try {
     data = JSON.parse(text);
   } catch (parseError) {
-    throw new Error(`Invalid JSON response from HF API. Response: ${text.slice(0, 200)}`);
+    throw new Error(`Invalid JSON response from Groq API. Response: ${text.slice(0, 200)}`);
   }
   
   // Extract content from OpenAI-compatible chat completion response
@@ -151,7 +151,7 @@ async function queryHuggingFaceQA(params: {
     return { answer: content, score: 0.8 };
   }
   
-  throw new Error(`Unexpected response format from HF API. Data: ${JSON.stringify(data).slice(0, 200)}`);
+  throw new Error(`Unexpected response format from Groq API. Data: ${JSON.stringify(data).slice(0, 200)}`);
 }
 
 serve(async (req) => {
@@ -160,9 +160,9 @@ serve(async (req) => {
   }
 
   try {
-    const HUGGING_FACE_ACCESS_TOKEN = Deno.env.get('HUGGING_FACE_ACCESS_TOKEN');
-    if (!HUGGING_FACE_ACCESS_TOKEN) {
-      throw new Error('HUGGING_FACE_ACCESS_TOKEN is not set');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not set');
     }
 
     const { clauseText } = await req.json();
@@ -174,24 +174,22 @@ serve(async (req) => {
 
     // Try models that work with the new chat completions API
     const modelsToTry = [
-      'meta-llama/Llama-3.3-70B-Instruct',
-      'meta-llama/Llama-3.1-8B-Instruct',
-      'google/gemma-3-4b-it',
-      'Qwen/Qwen3-4B-Instruct-2507',
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
     ];
 
     let analysisResult: { answer?: string; score?: number } | undefined;
     let lastError: unknown = undefined;
     for (const model of modelsToTry) {
       try {
-        // console.log(`Attempting HF QA with model: ${model}`);
-        analysisResult = await queryHuggingFaceQA({
-          token: HUGGING_FACE_ACCESS_TOKEN,
+        // console.log(`Attempting Groq QA with model: ${model}`);
+        analysisResult = await queryGroqQA({
+          token: GROQ_API_KEY,
           question: 'What are the key obligations, terms, and potential risks in this clause?',
           context: clauseText,
           model,
         });
-        // console.log('HF analysis result:', { model, ...analysisResult });
+        // console.log('Groq analysis result:', { model, ...analysisResult });
         break;
       } catch (err) {
         lastError = err;

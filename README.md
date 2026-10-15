@@ -1,6 +1,6 @@
 # ClauseCraft – AI Contract Generator & Analyzer
 
-A modern React app to generate contracts with LLMs and analyze clauses for risk. Contracts are generated via Supabase Edge Functions calling Hugging Face Router chat completions. Contracts and analyses are stored locally (browser `localStorage`) so anyone can use the app without auth.
+A modern React app to generate contracts with LLMs and analyze clauses for risk. Contracts are generated via Supabase Edge Functions calling Groq chat completions. Contracts and analyses are stored locally (browser `localStorage`) so anyone can use the app without auth.
 
 ## Features
 
@@ -15,7 +15,7 @@ A modern React app to generate contracts with LLMs and analyze clauses for risk.
 
 - Frontend: Vite + React + TypeScript + Tailwind + shadcn-ui
 - Storage: Client-side `localStorage` (no auth required)
-- AI backend: Supabase Edge Functions (Deno) that call Hugging Face Router `v1/chat/completions`
+- AI backend: Supabase Edge Functions (Deno) that call Groq’s OpenAI-compatible `v1/chat/completions`
 - Models: Priority order favors accessible high‑quality instruct models
 
 ## Getting Started (Local)
@@ -29,7 +29,7 @@ npm install
 
 2) Supabase (Edge Functions) setup
 - In Supabase Project → Functions, set environment variable:
-  - `HUGGING_FACE_ACCESS_TOKEN` (with access to your chosen models)
+  - `GROQ_API_KEY` (create one at https://console.groq.com/keys)
 - Deploy/update the two functions from `supabase/functions/` if needed.
 
 3) Run the app
@@ -79,6 +79,6 @@ src/
     └── types.ts                        # DB types (not used for local storage)
 
 supabase/functions/
-├── analyze-contract/index.ts           # Calls HF Router for clause analysis
-└── generate-contract/index.ts          # Calls HF Router for generation + parsing
+├── analyze-contract/index.ts           # Calls Groq for clause analysis
+└── generate-contract/index.ts          # Calls Groq for generation + parsing
 ```

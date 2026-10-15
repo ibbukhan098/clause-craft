@@ -6,7 +6,7 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 
 ## Project Summary
 
-**ClauseCraft** is a modern React application that enables users to generate professional legal contracts using AI and analyze clauses for risk assessment. The system leverages Hugging Face's Router API for LLM capabilities, Supabase Edge Functions for serverless compute, and browser LocalStorage for client-side persistence without requiring user authentication.
+**ClauseCraft** is a modern React application that enables users to generate professional legal contracts using AI and analyze clauses for risk assessment. The system leverages Groq's OpenAI-compatible API for LLM capabilities, Supabase Edge Functions for serverless compute, and browser LocalStorage for client-side persistence without requiring user authentication.
 
 ---
 
@@ -17,12 +17,12 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 ### Key Actors & Systems:
 - **Users**: Legal professionals, business owners, contract managers
 - **ClauseCraft System**: The core application for contract generation and analysis
-- **Hugging Face Router**: External AI service providing LLM capabilities
+- **Groq API**: External AI service providing LLM capabilities
 - **Browser LocalStorage**: Client-side data persistence
 
 ### Interactions:
 - Users interact with ClauseCraft to create, edit, and analyze contracts
-- ClauseCraft calls Hugging Face Router for AI-powered generation and analysis
+- ClauseCraft calls Groq API for AI-powered generation and analysis
 - All contract data is stored locally in the user's browser for privacy and simplicity
 
 ### Diagram
@@ -71,7 +71,7 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
   - Jurisdiction extraction
 
 ### External Dependencies:
-- **Hugging Face Router**: OpenAI-compatible chat completions API
+- **Groq API**: OpenAI-compatible chat completions API
 - **Browser LocalStorage**: Client-side JSON storage for contracts and analyses
 
 ### Diagram
@@ -146,14 +146,14 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 
 ### Contract Generation Flow:
 1. **User Input** → User provides prompt or questionnaire data
-2. **AI Generation** → Hugging Face Router generates contract text
+2. **AI Generation** → Groq API generates contract text
 3. **Text Parsing** → parseContractText() extracts clauses and sections
 4. **Risk Calculation** → calculateInitialRisk() assigns initial scores
 5. **Storage** → Contract object saved to LocalStorage
 
 ### Clause Analysis Flow:
 1. **Selection** → User clicks analyze on specific clause
-2. **AI Analysis** → Hugging Face Router analyzes clause content
+2. **AI Analysis** → Groq API analyzes clause content
 3. **Results** → Analysis result with key insights and refined risk score
 4. **Update** → Clause updated with analysis data
 5. **Persistence** → Updated contract saved to LocalStorage
@@ -181,12 +181,11 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 - **Deno Edge Runtime**: Serverless functions execution
 - **Environment Variables**: Secure storage for API tokens
 
-### Hugging Face Infrastructure:
-- **Inference Router**: router.huggingface.co endpoint
+### Groq Infrastructure:
+- **Inference Router**: api.groq.com/openai/v1 endpoint
 - **AI Models**: Multiple LLMs with fallback capabilities
-  - meta-llama/Llama-3.3-70B-Instruct
-  - meta-llama/Llama-3.1-8B-Instruct
-  - google/gemma-3-4b-it
+  - llama-3.3-70b-versatile
+  - llama-3.1-8b-instant
 
 ---
 
@@ -236,14 +235,14 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 
 ### Backend:
 - **Runtime**: Deno (Supabase Edge Functions)
-- **API**: Hugging Face Router (OpenAI-compatible)
+- **API**: Groq API (OpenAI-compatible)
 - **Authentication**: None (anonymous usage)
 - **Storage**: Browser LocalStorage
 
 ### Infrastructure:
 - **Hosting**: Vercel (frontend)
 - **Functions**: Supabase Edge Functions
-- **AI Models**: Hugging Face Hub
+- **AI Models**: Groq (Llama 3.3 70B, Llama 3.1 8B)
 - **Domain**: Custom domain with SSL
 
 ### Development:
