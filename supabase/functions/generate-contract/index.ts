@@ -82,10 +82,10 @@ Requirements:
     // You can reorder or add gated models once your HF token has access
     const modelsToTry = [
       // Your accessible models with chat completions API
-      'meta-llama/Llama-3.1-70B-Instruct',
-      'mistralai/Mistral-7B-Instruct-v0.3',
-      'google/gemma-2-2b-it',
-      'HuggingFaceH4/zephyr-7b-beta',
+      'meta-llama/Llama-3.3-70B-Instruct',
+      'meta-llama/Llama-3.1-8B-Instruct',
+      'google/gemma-3-4b-it',
+      'Qwen/Qwen3-4B-Instruct-2507',
       // Template fallback will be used if all models fail
     ];
 

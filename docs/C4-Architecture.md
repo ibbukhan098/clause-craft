@@ -184,9 +184,9 @@ This document provides comprehensive C4 (Context, Container, Component, Code) ar
 ### Hugging Face Infrastructure:
 - **Inference Router**: router.huggingface.co endpoint
 - **AI Models**: Multiple LLMs with fallback capabilities
-  - meta-llama/Llama-3.1-70B-Instruct
-  - mistralai/Mistral-7B-Instruct-v0.3
-  - google/gemma-2-2b-it
+  - meta-llama/Llama-3.3-70B-Instruct
+  - meta-llama/Llama-3.1-8B-Instruct
+  - google/gemma-3-4b-it
 
 ---
 
